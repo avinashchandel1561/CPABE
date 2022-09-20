@@ -2,7 +2,7 @@ import java.util.HashMap;
 
 public class Access_Policy {
 HashMap<String,String> ap=new HashMap<>();
-public String getPolicy(String docId) {
+public String gePolicy(String docId) {
 	if(ap.containsKey(docId)) {
 		return ap.get(docId);
 	}
