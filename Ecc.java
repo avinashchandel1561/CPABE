@@ -6,6 +6,9 @@ public class Ecc{
 	int a,b,q;
 	HashMap<Pair,Pair> pt=new HashMap<>();
 	HashMap<Pair,Pair> subgrouppt=new HashMap<>();
+//	HashMap<Integer,Integer>inverses=new HashMap<>();
+	ArrayList<Integer>randomVal=new ArrayList<>();
+	
 	Ecc(int a,int b,int q){
 		this.a=a;
 		this.b=b;
@@ -19,15 +22,18 @@ public class Ecc{
 			int xc=(int)Math.pow(x, 3);
 			int w=(xc+(a*x)+b)%q;
 			int wr=find_sq(w);
+			if(!(wr==0 || (q-wr)==0)) {
+				
 			if(wr!=Integer.MAX_VALUE && !(pt.containsKey(new Pair(x,wr)) || pt.containsKey(new Pair(x,(q-wr)%q))) ) {
 				pt.put(new Pair(x,wr),new Pair(x,(q-wr)%q));
+			}
 			}
 			x++;
 		}
 	}
 	
 	
-	int find_sq(int w) {
+	private int find_sq(int w) {
 		
 		for(int i=0;i<q;i++) {
 			if((i*i)%q==w) {
@@ -49,7 +55,6 @@ public class Ecc{
 		Pair p=new Pair(Integer.MAX_VALUE,Integer.MAX_VALUE);
 		int n=(pt.size()*2) + 1;
 		int sgSize;
-		if(! isPrime(n)) {
 			ArrayList<Integer>factors=new ArrayList<>();
 			generatePrimeFactors(n,factors);
 			sgSize=findMax(factors);
@@ -57,73 +62,113 @@ public class Ecc{
 				p=e.getKey();
 				Pair d=e.getKey();
 				subgrouppt.put(p,pt.get(p));
-				for(int i=1;i<sgSize;i++) {
+				System.out.println("Checking for "+p.x+" "+p.y);
+				
+				for(int i=2;i<=n;i++) {
 					d=add(p,d);
+					if(!(d.y==0 || (q-d.y)%q ==0)) {
+						if(pt.containsKey(d) || pt.containsValue(d)) {
+						randomVal.add(i);
+					System.out.println(i+"    Value of updated d"+d.x + " "+d.y);
 					if(!(subgrouppt.containsKey(d) || subgrouppt.containsKey(new Pair(d.x,(q-d.y)%q)))) {
 						subgrouppt.put(d, new Pair(d.x,(q-d.y)%q));
 					}
+					}
+					}
 				}
-				if(subgrouppt.size()==sgSize) {
+				if(subgrouppt.size()==pt.size()) {
 					return p;
 				}
 				subgrouppt.clear();
 			}
-		}
-		else {
-			
-			for(Entry<Pair,Pair> e:pt.entrySet()) {
-				return e.getKey();
-			}
-		}
+
 		return p;
 	}
 	
 	
-	Pair add(Pair p,Pair d) {
-		if(p.x==d.x) {
-			if(p.y==0) {
-				p.y=q-p.y;
-			}
+	 Pair add(Pair p,Pair d) {
+		if(p.x==d.x && p.y==d.y) {
 			
-			int lmbda= ((3*((int)Math.pow(p.x, 2)) + a)/(2*p.y));
-			lmbda=lmbda % q;
-			if(lmbda<0) {
-				lmbda=findPos(lmbda);
-			}
-			int x3= ((int)Math.pow(lmbda, 2)) - p.x -d.x;
-			x3=x3 % q;
+			int temp0= p.x * p.x;
+			temp0*=3;
+			temp0+=a;
+			temp0=temp0%q;
+			int temp1=(2*p.y);
+			int temp1_inv= find_inverse(q,temp1);
+			int lmbda=temp0*temp1_inv;
+			lmbda=lmbda%q;
+			
+			int l2=(lmbda*lmbda);
+			int x3=l2-p.x-d.x;
+			x3=x3%q;
 			if(x3<0) {
 				x3=findPos(x3);
 			}
-			int y3= (lmbda * (p.x - x3)) - p.y;
-			y3=y3 % q;
-			if(y3 < 0) {
-				y3 =findPos(y3);
+			int temp2=p.x-x3;
+			int y3=lmbda*temp2;
+			y3-=p.y;
+			y3=y3%q;
+			if(y3<0) {
+				y3=findPos(y3);
 			}
+//			System.out.println(temp1_inv);
 			return new Pair(x3,y3);
 		}
 		else {
-			int lmbda=(d.y-p.y)/(d.x - p.x);
-			lmbda=lmbda % q;
-			if(lmbda<0) {
-				lmbda=findPos(lmbda);
+			int temp0=d.y-p.y;
+			temp0=temp0%q;
+			if(temp0<0) {
+				temp0=findPos(temp0);
 			}
-			int x3= ((int)Math.pow(lmbda, 2)) - p.x -d.x;
-			x3=x3 % q;
+			int temp1=d.x-p.x;
+			temp1=temp1%q;
+			if(temp1<0) {
+				temp1=findPos(temp1);
+			}
+			int temp1_inv=find_inverse(q,temp1);
+			int lmbda=temp0*temp1_inv;
+			lmbda=lmbda%q;
+			
+			int l2=lmbda*lmbda;
+			int x3=l2-p.x-d.x;
+			x3=x3%q;
 			if(x3<0) {
 				x3=findPos(x3);
 			}
-			int y3= (lmbda * (p.x - x3)) - p.y;
-			y3=y3 % q;
-			if(y3 < 0) {
-				y3 =findPos(y3);
+			int temp2=p.x-x3;
+			int y3=lmbda*temp2;
+			y3=y3-p.y;
+			y3=y3%q;
+			if(y3<0) {
+				y3=findPos(y3);
 			}
 			return new Pair(x3,y3);
 			
 		}
 	}
 	
-	int findPos(int n) {
+	private int find_inverse(int q , int num) {
+		int r1=q,r2=num;
+		int t1=0,t2=1;
+		int r,t;
+		while(r2>0) {
+			q=r1/r2;
+			r=r1-(q*r2);
+			r1=r2;
+			r2=r;
+			
+			t=t1-(q*t2);
+			t1=t2;
+			t2=t;
+		}
+		if(r1==1) {
+			if(t1<0)
+				return findPos(t1);
+			return t1;
+		}
+		return Integer.MAX_VALUE;
+	}
+	private int findPos(int n) {
 		while(n<0) {
 			n +=q;
 		}
@@ -131,7 +176,7 @@ public class Ecc{
 	}
 	
 	
-	int findMax(ArrayList<Integer> factors) {
+	private int findMax(ArrayList<Integer> factors) {
 		int max=Integer.MIN_VALUE;
 		for(int i=0;i<factors.size();i++) {
 			max=Math.max(max, factors.get(i));
@@ -140,7 +185,7 @@ public class Ecc{
 	}
 	
 	
-	void generatePrimeFactors(int n,ArrayList<Integer> factors){
+	private void generatePrimeFactors(int n,ArrayList<Integer> factors){
 		 int c = 2;
 	        while (n > 1) {
 	            if (n % c == 0) {
@@ -154,7 +199,7 @@ public class Ecc{
 	}
 	
 	
-	boolean isPrime(int n)
+	private boolean isPrime(int n)
     {
  
         if (n <= 1)
