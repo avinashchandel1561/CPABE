@@ -44,48 +44,85 @@ public class Ecc{
 	}
 	
 	
-	void PrintMap() {
+	void PrintMap(HashMap<Pair,Pair> pt) {
 		for(Entry<Pair, Pair> e:pt.entrySet()) {
 			System.out.println("{"+e.getKey().x+" , "+e.getKey().y+"}  "+"{"+e.getValue().x+" , "+e.getValue().y+"}  ");
 		}
 	}
 	
 	
+	
 	Pair findBasePoint() {
-		Pair p=new Pair(Integer.MAX_VALUE,Integer.MAX_VALUE);
-		int n=(pt.size()*2) + 1;
-		int sgSize;
-			ArrayList<Integer>factors=new ArrayList<>();
-			generatePrimeFactors(n,factors);
-			sgSize=findMax(factors);
-			for(Entry<Pair,Pair> e : pt.entrySet()) {
-				p=e.getKey();
-				Pair d=e.getKey();
-				subgrouppt.put(p,pt.get(p));
-				System.out.println("Checking for "+p.x+" "+p.y);
-				
-				for(int i=2;i<=n;i++) {
-					d=add(p,d);
-					if(!(d.y==0 || (q-d.y)%q ==0)) {
-						if(pt.containsKey(d) || pt.containsValue(d)) {
-						randomVal.add(i);
-					System.out.println(i+"    Value of updated d"+d.x + " "+d.y);
-					if(!(subgrouppt.containsKey(d) || subgrouppt.containsKey(new Pair(d.x,(q-d.y)%q)))) {
-						subgrouppt.put(d, new Pair(d.x,(q-d.y)%q));
-					}
-					}
-					}
+		Pair bp,bp1;
+		
+		int n=2*pt.size() + 1;
+		ArrayList<Integer>factors=new ArrayList<>();
+		generatePrimeFactors(n,factors);
+		for(int index=0;index<factors.size();index++) {
+			int sbsize=factors.get(factors.size()-1-index);
+			System.out.println(sbsize);
+			for(Entry<Pair,Pair> e:pt.entrySet()) {
+				bp=e.getKey();
+				bp1=e.getValue();
+//				System.out.println("BP : "+bp.x+" "+bp.y);
+//				System.out.println("BP1 : "+bp1.x+" "+bp1.y);
+				if(findBasePointUtility(bp,sbsize)) {
+					return bp;
 				}
-				if(subgrouppt.size()==pt.size()) {
-					return p;
+				if(findBasePointUtility(bp1,sbsize)) {
+					return bp1;
 				}
-				subgrouppt.clear();
 			}
-
-		return p;
+		}
+		
+		
+		
+		return new Pair(Integer.MAX_VALUE,Integer.MAX_VALUE);
 	}
 	
+	boolean findBasePointUtility(Pair bp,int n) {
+		
+		Pair d=bp;
+//		subgrouppt.put(d,new Pair(d.x,(q-d.y)%q));
+//		randomVal.add(1);
+		for(int i=2;i<=n;i++) {
+			d=add(d,bp);
+//			System.out.println("D : "+d.x + " "+d.y);
+			if(d.y!=0 && (q-d.y)%q !=0) {
+//				System.out.println("NOt zero"+pt.size());
+				
+				if(checkKey(d,pt)) {
+//					System.out.println("Exist in PT");
+					randomVal.add(i);
+					if(!checkKey(d,subgrouppt)) {
+//						System.out.println("Adding");
+						subgrouppt.put(d,new Pair(d.x,(q-d.y)%q));
+					}
+				}
+			}
+		}
+//		System.out.println("Subgroup SIze : "+subgrouppt.size());
+		if(subgrouppt.size()==(n-1)/2) {
+			return true;
+		}
+		subgrouppt.clear();
+		randomVal.clear();
+		return false;
+	}
 	
+	boolean checkKey(Pair bp,HashMap<Pair,Pair>hm) {
+		for(Entry <Pair,Pair> ent : hm.entrySet() ) {
+			Pair k=ent.getKey();
+			Pair val=ent.getValue();
+			if(bp.x==k.x && bp.y==k.y) {
+				return true;
+			}
+			if(bp.x==val.y && bp.y==val.y) {
+				return true;
+			}
+		}
+		return false;
+	}
 	 Pair add(Pair p,Pair d) {
 		if(p.x==d.x && p.y==d.y) {
 			
