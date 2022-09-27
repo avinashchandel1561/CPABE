@@ -16,7 +16,7 @@ public class Setup {
 		this.ec=new Ecc(a,b,q);
 		ec.EccPointGen();
 		bp =ec.findBasePoint();
-		ec.PrintMap();
+		ec.PrintMap(ec.pt);
 		System.out.println(" Base Point : "+bp.x + " , "+ bp.y);
 		
 	}
@@ -38,35 +38,35 @@ public class Setup {
 			int KgcMk_index=rand.nextInt(ec.randomVal.size());
 			KgcMk=ec.randomVal.get(KgcMk_index);
 			
-			System.out.println("KGCMK"+KgcMk);
+//			System.out.println("KGCMK"+KgcMk);
 		PPKgc=bp;
 		for(int i=2;i<=KgcMk;i++) {
 			PPKgc=ec.add(bp, PPKgc);
 		}
-		System.out.println(PPKgc.x + " "+PPKgc.y);
-	}while((ec.pt.containsKey(PPKgc) || ec.pt.containsValue(PPKgc)));
+//		System.out.println(PPKgc.x + " "+PPKgc.y);
+	}while(!ec.checkKey(PPKgc, ec.pt));
 		
 		System.out.println("KGC SETUP COMPLETED");
 	}
 	
 	void CsSetup(Ecc ec) {
-//		int max=q-1,min=1;
-//		int range=max-min+1;
-//		do {
-////		CsMk=((int)(Math.random()*range))+min;
-//			Random rand=new Random();
-//			int CsMk_index=rand.nextInt(ec.randomVal.size());
-//			CsMk=ec.randomVal.get(CsMk_index);
+		int max=q-1,min=1;
+		int range=max-min+1;
+		do {
+//		CsMk=((int)(Math.random()*range))+min;
+			Random rand=new Random();
+			int CsMk_index=rand.nextInt(ec.randomVal.size());
+			CsMk=ec.randomVal.get(CsMk_index);
 //			System.out.println("CSMK"+CsMk);
-////		while(CsMk==KgcMk) {
-////			CsMk=rand.nextInt(q-1)+1;
-////		}
-//		PPCs=bp;
-//		for(int i=2;i<=CsMk;i++) {
-//			PPCs=ec.add(bp, PPCs);
+//		while(CsMk==KgcMk) {
+//			CsMk=rand.nextInt(q-1)+1;
 //		}
-//		}while(!(ec.pt.containsKey(PPCs) || ec.pt.containsValue(PPCs)));
-//		
+		PPCs=bp;
+		for(int i=2;i<=CsMk;i++) {
+			PPCs=ec.add(bp, PPCs);
+		}
+		}while(!ec.checkKey(PPCs, ec.pt));
+		
 		System.out.println("CS SETUP COMPLETED");
 	}
 	
